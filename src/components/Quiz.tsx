@@ -1,46 +1,41 @@
-import React, { useState } from 'react'
-import './Quiz.css'
-import QuizQuestion from '../core/QuizQuestion';
-
-interface QuizState {
-  questions: QuizQuestion[]
-  currentQuestionIndex: number
-  selectedAnswer: string | null
-  score: number
-}
+import React, { useState } from 'react';
+import './Quiz.css';
+import QuizCore from '../core/QuizCore';
 
 const Quiz: React.FC = () => {
-  const initialQuestions: QuizQuestion[] = [
-    {
-      question: 'What is the capital of France?',
-      options: ['London', 'Berlin', 'Paris', 'Madrid'],
-      correctAnswer: 'Paris',
-    },
-  ];
-  const [state, setState] = useState<QuizState>({
-    questions: initialQuestions,
-    currentQuestionIndex: 0,  // Initialize the current question index.
-    selectedAnswer: null,  // Initialize the selected answer.
-    score: 0,  // Initialize the score.
-  });
+  const [quiz, setQuiz] = useState(new QuizCore()); // Persist QuizCore instance
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [score, setScore] = useState<number>(0);
+  const [currentQuestion, setCurrentQuestion] = useState(quiz.getCurrentQuestion());
 
   const handleOptionSelect = (option: string): void => {
-    setState((prevState) => ({ ...prevState, selectedAnswer: option }));
-  }
-
+    setSelectedAnswer(option);
+  };
 
   const handleButtonClick = (): void => {
-    // Task3: Implement the logic for button click, such as moving to the next question.
-  } 
+    if (selectedAnswer) {
+      quiz.answerQuestion(selectedAnswer); // Process the answer
+      setScore(quiz.getScore()); // Update score
+      quiz.nextQuestion(); // Move to the next question
+      setCurrentQuestion(quiz.getCurrentQuestion()); // Fetch new question
+      setSelectedAnswer(null); // Reset selected answer
+    }
+  };
 
-  const { questions, currentQuestionIndex, selectedAnswer, score } = state;
-  const currentQuestion = questions[currentQuestionIndex];
+  const handlePlayAgain = (): void => {
+    const newQuiz = new QuizCore(); // Create a new instance
+    setQuiz(newQuiz);
+    setScore(0);
+    setSelectedAnswer(null);
+    setCurrentQuestion(newQuiz.getCurrentQuestion());
+  };
 
   if (!currentQuestion) {
     return (
       <div>
         <h2>Quiz Completed</h2>
-        <p>Final Score: {score} out of {questions.length}</p>
+        <p>Final Score: {score} out of {quiz.getTotalQuestions()}</p>
+        <button onClick={handlePlayAgain}>Play Again</button> {/* Play Again Button */}
       </div>
     );
   }
@@ -49,14 +44,14 @@ const Quiz: React.FC = () => {
     <div>
       <h2>Quiz Question:</h2>
       <p>{currentQuestion.question}</p>
-    
+
       <h3>Answer Options:</h3>
       <ul>
         {currentQuestion.options.map((option) => (
           <li
             key={option}
             onClick={() => handleOptionSelect(option)}
-            className={selectedAnswer === option ? 'selected' : ''}
+            className={`option ${selectedAnswer === option ? 'selected' : ''}`}
           >
             {option}
           </li>
